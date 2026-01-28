@@ -1,0 +1,4 @@
+node_modules/
+backend/db/database.sqlite
+.DS_Store
+.idea/

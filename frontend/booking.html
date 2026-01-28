@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Booking</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+    <b>Booking</b>
+    <nav>
+        <a href="/index.html">Home</a>
+        <a href="/admin.html">Admin</a>
+    </nav>
+    <button id="logout" style="width:auto">Logout</button>
+</header>
+
+<main class="row">
+    <section class="col">
+        <div class="card">
+            <h3>Reserve</h3>
+            <div id="notice" class="notice"></div>
+
+            <label>Service</label>
+            <select id="service"></select>
+
+            <label>Date</label>
+            <input id="date" type="date" />
+
+            <div class="card">
+                <div id="selectedSlot">Selected slot: -</div>
+                <input id="slotId" type="hidden" />
+            </div>
+
+            <label>Note</label>
+            <textarea id="note" rows="3" placeholder="Optional"></textarea>
+
+            <button id="reserve">Reserve</button>
+        </div>
+
+        <div class="card">
+            <h3>Available slots</h3>
+            <div id="slots" class="list"></div>
+        </div>
+    </section>
+
+    <section class="col">
+        <div class="card">
+            <h3>My bookings</h3>
+            <div id="myBookings" class="list"></div>
+        </div>
+    </section>
+</main>
+
+<script src="/js/api.js"></script>
+<script src="/js/booking.js"></script>
+</body>
+</html>

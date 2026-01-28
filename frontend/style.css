@@ -1,0 +1,216 @@
+:root {
+    --bg-main: #f5f7fb;
+    --bg-card: #ffffff;
+    --primary: #5b6cff;
+    --primary-dark: #4453d6;
+    --accent: #00bfa6;
+    --danger: #e53935;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --radius: 14px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: linear-gradient(135deg, #f5f7fb, #eef1ff);
+    color: var(--text-main);
+}
+
+/* HEADER */
+
+header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+header b {
+    font-size: 18px;
+    color: var(--primary);
+}
+
+nav a {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-right: 14px;
+}
+
+nav a:hover {
+    color: var(--primary);
+}
+
+/* LAYOUT */
+
+main {
+    max-width: 1100px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
+.row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.col {
+    flex: 1;
+    min-width: 320px;
+}
+
+/* CARDS */
+
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+}
+
+.card h2,
+.card h3 {
+    margin-top: 0;
+    color: var(--primary);
+}
+
+/* FORMS */
+
+label {
+    display: block;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    font-size: 14px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* BUTTONS */
+
+button {
+    margin-top: 14px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* LISTS */
+
+.list {
+    display: grid;
+    gap: 12px;
+}
+
+.item {
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item b {
+    color: var(--text-main);
+}
+
+.item .small {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* BADGES */
+
+.badge {
+    background: #eef1ff;
+    color: var(--primary);
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    margin-left: 6px;
+}
+
+/* NOTICES */
+
+.notice {
+    padding: 12px;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.notice.ok {
+    background: #e6f8f4;
+    color: #00796b;
+    border: 1px solid #b2dfdb;
+}
+
+.notice.err {
+    background: #fdecea;
+    color: var(--danger);
+    border: 1px solid #f5c6cb;
+}
+
+/* SMALL TEXT */
+
+.small {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* LOGOUT BUTTON */
+
+header button {
+    margin-left: auto;
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+header button:hover {
+    background: var(--primary);
+    color: white;
+}

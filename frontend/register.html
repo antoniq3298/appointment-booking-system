@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Register</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+    <b>Register</b>
+    <nav>
+        <a href="/index.html">Home</a>
+        <a href="/login.html">Login</a>
+    </nav>
+</header>
+
+<main>
+    <div id="notice" class="notice"></div>
+
+    <div class="card">
+        <label>Name</label>
+        <input id="name" placeholder="Antonia" />
+
+        <label>Phone</label>
+        <input id="phone" placeholder="+359..." />
+
+        <label>Email</label>
+        <input id="email" placeholder="a@b.com" />
+
+        <label>Password</label>
+        <input id="password" type="password" placeholder="****" />
+
+        <button onclick="handleRegister()">Register</button>
+    </div>
+</main>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>

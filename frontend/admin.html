@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+    <b>Admin panel</b>
+    <nav>
+        <a href="/index.html">Home</a>
+        <a href="/booking.html">Booking</a>
+    </nav>
+    <button id="logout" style="width:auto">Logout</button>
+</header>
+
+<main class="row">
+    <section class="col">
+        <div class="card">
+            <h3>Services</h3>
+            <div id="noticeServices" class="notice"></div>
+
+            <label>Name</label>
+            <input id="svcName" placeholder="New service" />
+
+            <label>Duration (minutes)</label>
+            <input id="svcDuration" type="number" value="60" />
+
+            <label>Price</label>
+            <input id="svcPrice" type="number" value="50" />
+
+            <button id="addService">Add service</button>
+        </div>
+
+        <div class="card">
+            <h3>Services list</h3>
+            <div id="servicesList" class="list"></div>
+        </div>
+    </section>
+
+    <section class="col">
+        <div class="card">
+            <h3>Generate slots</h3>
+            <div id="noticeSlots" class="notice"></div>
+
+            <label>Date</label>
+            <input id="slotDate" type="date" />
+
+            <label>From</label>
+            <input id="slotFrom" type="time" value="10:00" />
+
+            <label>To</label>
+            <input id="slotTo" type="time" value="18:00" />
+
+            <label>Interval (minutes)</label>
+            <input id="slotInterval" type="number" value="30" />
+
+            <button id="genSlots">Generate</button>
+        </div>
+
+        <div class="card">
+            <h3>Bookings</h3>
+            <button id="refreshBookings" style="width:auto">Refresh</button>
+            <div id="bookingsList" class="list"></div>
+        </div>
+    </section>
+</main>
+
+<script src="/js/api.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>

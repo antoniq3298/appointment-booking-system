@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Appointment Booking</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+    <b>Appointment Booking</b>
+    <nav>
+        <a href="/register.html">Register</a>
+        <a href="/login.html">Login</a>
+        <a href="/booking.html">Booking</a>
+        <a href="/admin.html">Admin</a>
+    </nav>
+</header>
+
+<main>
+    <div class="card">
+        <h2>Start</h2>
+        <p class="small">Client: register/login → booking</p>
+        <p class="small">Admin: bootstrap → admin panel</p>
+    </div>
+
+    <div class="card">
+        <h3>Admin bootstrap (one-time)</h3>
+        <p class="small">Create admin account. Use once.</p>
+        <div id="notice" class="notice"></div>
+
+        <label>Name</label>
+        <input id="name" placeholder="Admin" />
+
+        <label>Email</label>
+        <input id="email" placeholder="admin@mail.bg" />
+
+        <label>Password</label>
+        <input id="password" type="password" placeholder="****" />
+
+        <button onclick="handleBootstrapAdmin()">Create Admin</button>
+    </div>
+</main>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>

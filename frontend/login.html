@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<header>
+    <b>Login</b>
+    <nav>
+        <a href="/index.html">Home</a>
+        <a href="/register.html">Register</a>
+    </nav>
+</header>
+
+<main>
+    <div id="notice" class="notice"></div>
+
+    <div class="card">
+        <label>Email</label>
+        <input id="email" placeholder="a@b.com" />
+
+        <label>Password</label>
+        <input id="password" type="password" placeholder="****" />
+
+        <button onclick="handleLogin()">Login</button>
+    </div>
+</main>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>
