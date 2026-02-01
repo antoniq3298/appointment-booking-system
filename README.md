@@ -1,66 +1,194 @@
-# Appointment Booking System
+
 <img width="1316" height="832" alt="image" src="https://github.com/user-attachments/assets/d81744cf-a75d-406e-ac4c-a1a88641a512" />
 
-Web application for creating and managing appointments with separate **frontend** and **backend** folders.
+# Appointment Booking System (Slot-Based) — Full-Stack Web App
 
-## Overview
-Appointment Booking System helps users book appointments by selecting date/time and lets admins (or staff) review and manage bookings.
+A lightweight web-based appointment booking system for small service businesses.  
+Clients book services into predefined time slots. Admin manages services, slots, and bookings.
 
 ## Features
-- Create a new appointment (date/time + details)
-- List appointments
-- View appointment details
-- Cancel an appointment
-- Input validation + user-friendly error messages
-- Clear separation between UI and API (frontend ↔ backend)
 
-> Update this list to match your exact implementation (add/remove items).
+### Client
+- Register / Login
+- View active services
+- Select date and view available slots
+- Create booking (conflict-safe)
+- View own bookings
+- Cancel own booking
+
+### Admin
+- One-time admin bootstrap (demo)
+- Add / disable services
+- Generate slots for a date (work range + interval)
+- View all bookings
+- Cancel any booking
 
 ## Tech Stack
-**Frontend:** JavaScript, HTML5, CSS3  
-**Backend:** (fill in) Node.js / Express / other  
-**Database:** (fill in) MongoDB / MySQL / PostgreSQL / SQLite / in-memory  
-**API:** REST
+- Frontend: HTML, CSS, Vanilla JavaScript
+- Backend: Node.js, Express (REST API)
+- Database: SQLite
+- Auth: JWT (Bearer token)
+- Passwords: bcryptjs
+  appointment-booking/
+├── backend/
+│ ├── package.json
+│ ├── server.js
+│ └── db/
+│ ├── db.js
+│ └── init.sql
+├── frontend/
+│ ├── index.html
+│ ├── login.html
+│ ├── register.html
+│ ├── booking.html
+│ ├── admin.html
+│ ├── css/
+│ │ └── style.css
+│ └── js/
+│ ├── api.js
+│ ├── auth.js
+│ ├── booking.js
+│ └── admin.js
+├── docs/
+│ ├── api.md
+│ ├── er-diagram.md
+│ └── use-cases.md
+└── .gitignore
 
-## Project Structure
-```text
-appointment-booking-system/
-├─ frontend/          # UI (client)
-├─ backend/           # API (server)
-└─ docs/              # screenshots, notes, diagrams
-Getting Started (Local Run)
-1) Prerequisites
 
-Git
+## Requirements
+- Node.js (LTS recommended)
+- npm
 
-Node.js + npm (if your backend/frontend are Node-based)
-git clone https://github.com/antoniq3298/appointment-booking-system.git
-cd appointment-booking-system
+## Setup & Run (Windows / PowerShell)
+
+1) Install dependencies
+```powershell
 cd backend
 npm install
-npm start
+Start server
+node server.js
+Open in browser
 
-Frontend setup
+App: http://localhost:3000
 
-Open the frontend (choose the one that matches your project):
+Health check: http://localhost:3000/api/health
 
-Option A: Static frontend
+Stop server: Ctrl + C
+First-Time Demo Flow
+1) Create admin (one-time)
 
-Open frontend/index.html in a browser
-cd ../frontend
-npx serve .
-Option B: Frontend with npm scripts
-cd ../frontend
-npm install
-npm start
+Open: http://localhost:3000
+Fill the “Admin bootstrap” form and create an admin user.
 
-Environment Variables
+2) Admin actions
 
-If your backend uses .env, create backend/.env:
-PORT=3000
-# DB_URL=...
-# JWT_SECRET=...
-# CORS_ORIGIN=http://localhost:5173
+Open: http://localhost:3000/admin.html
 
+Add a service
 
-or run a local server (recommended):
+Generate slots (date + from/to + interval)
+
+Refresh bookings list
+
+3) Client actions
+
+Open: http://localhost:3000/register.html
+
+Register as client
+
+Go to booking page
+
+Select date, pick slot, reserve
+
+Check “My bookings”
+
+Cancel booking (optional)
+
+Booking Rules & Data Integrity
+
+A slot is offered only when:
+
+slots.is_active = 1
+
+there is no booking with status = 'booked' for that slot
+
+Booking conflicts are prevented server-side:
+
+if two clients try the same slot, the second request returns 409 SLOT_ALREADY_BOOKED
+
+API (Quick Overview)
+
+Base URL: http://localhost:3000/api
+Auth header: Authorization: Bearer <token>
+
+POST /auth/register
+
+POST /auth/login
+
+POST /admin/bootstrap (demo)
+
+GET /services
+
+POST /services (admin)
+
+DELETE /services/:id (admin)
+
+GET /slots?date=YYYY-MM-DD
+
+POST /slots/generate (admin)
+
+POST /bookings (client)
+
+GET /bookings/my (client)
+
+GET /bookings (admin)
+
+PATCH /bookings/:id/cancel (client/admin)
+
+Full documentation: docs/api.md
+
+Database
+
+SQLite file is created at:
+
+backend/db/database.sqlite
+
+Schema and seed data:
+
+backend/db/init.sql
+
+ER diagram (Mermaid):
+
+docs/er-diagram.md
+
+Use cases:
+
+docs/use-cases.md
+
+Screenshots Checklist (for thesis)
+
+Create folder: docs/screenshots/ and capture:
+
+01-home-bootstrap.png — Home + bootstrap admin
+
+02-admin-services.png — Add/disable services
+
+03-admin-generate-slots.png — Slot generation
+
+04-register.png — Client registration
+
+05-booking-available-slots.png — Date + available slots
+
+06-booking-confirmation.png — Successful booking
+
+07-admin-bookings.png — Admin bookings list
+
+08-conflict-409.png — Conflict case (SLOT_ALREADY_BOOKED)
+
+Notes on npm audit
+
+npm audit can report vulnerabilities from transitive dependencies.
+For this academic scope (local demo), stability is prioritized. Avoid npm audit fix --force during development unless you plan to re-test all dependencies.
+
+## Project Structure
