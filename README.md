@@ -1,4 +1,5 @@
 # Appointment Booking System
+<img width="1316" height="832" alt="image" src="https://github.com/user-attachments/assets/d81744cf-a75d-406e-ac4c-a1a88641a512" />
 
 Web application for creating and managing appointments with separate **frontend** and **backend** folders.
 
