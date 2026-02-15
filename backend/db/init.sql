@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS bookings (
                                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                                         user_id INTEGER NOT NULL,
                                         service_id INTEGER NOT NULL,
-                                        slot_id INTEGER NOT NULL UNIQUE,
+                                        slot_id INTEGER NOT NULL,
                                         note TEXT,
                                         status TEXT NOT NULL CHECK(status IN ('booked','canceled')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS bookings (
     FOREIGN KEY(service_id) REFERENCES services(id),
     FOREIGN KEY(slot_id) REFERENCES slots(id)
     );
+CREATE UNIQUE INDEX IF NOT EXISTS ux_bookings_slot_booked
+    ON bookings(slot_id)
+    WHERE status = 'booked';
 
 INSERT INTO services (name, duration_minutes, price, is_active)
 SELECT 'Manicure', 60, 50.00, 1

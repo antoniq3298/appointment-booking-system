@@ -82,7 +82,7 @@ app.post("/api/auth/login", async (req, res) => {
     res.json({ user, token });
 });
 
-// ADMIN bootstrap endpoint: create admin once (delete after demo if желаеш)
+// ADMIN bootstrap endpoint: create admin once
 app.post("/api/admin/bootstrap", async (req, res) => {
     const { name, email, password } = req.body || {};
     if (!name || !email || !password) return res.status(400).json({ error: "INVALID_INPUT" });
@@ -143,13 +143,17 @@ app.get("/api/slots", async (req, res) => {
     LEFT JOIN bookings b ON b.slot_id = s.id AND b.status = 'booked'
     WHERE s.is_active = 1
       AND date(s.start_datetime) = date(?)
+      AND datetime(s.start_datetime) > datetime('now')
       AND b.id IS NULL
     ORDER BY s.start_datetime ASC
     `,
         [date]
     );
 
-    res.json(rows);
+    const nowMs = Date.now();
+    const filtered = rows.filter(s => new Date(s.start_datetime + "Z").getTime() > nowMs);
+    res.json(filtered);
+
 });
 
 app.post("/api/slots", authRequired, adminOnly, async (req, res) => {
@@ -218,8 +222,10 @@ app.post("/api/bookings", authRequired, async (req, res) => {
     if (!service_id || !slot_id) return res.status(400).json({ error: "INVALID_INPUT" });
 
     // slot must be active
-    const slot = await get(db, "SELECT id FROM slots WHERE id = ? AND is_active = 1", [slot_id]);
+    const slot = await get(db, "SELECT id, start_datetime FROM slots WHERE id = ? AND is_active = 1", [slot_id]);
     if (!slot) return res.status(404).json({ error: "SLOT_NOT_FOUND" });
+    const startMs = new Date(slot.start_datetime + "Z").getTime();
+    if (startMs <= Date.now()) return res.status(400).json({ error: "SLOT_IN_PAST" });
 
     // service must be active
     const svc = await get(db, "SELECT id FROM services WHERE id = ? AND is_active = 1", [service_id]);
@@ -284,12 +290,32 @@ app.get("/api/bookings", authRequired, adminOnly, async (req, res) => {
 app.patch("/api/bookings/:id/cancel", authRequired, async (req, res) => {
     const id = Number(req.params.id);
 
-    const row = await get(db, "SELECT id, user_id FROM bookings WHERE id = ?", [id]);
+    const row = await get(
+        db,
+        `
+        SELECT b.id, b.user_id, sl.start_datetime
+        FROM bookings b
+        JOIN slots sl ON sl.id = b.slot_id
+        WHERE b.id = ?
+        `,
+        [id]
+    );
     if (!row) return res.status(404).json({ error: "NOT_FOUND" });
 
     const isOwner = row.user_id === req.user.id;
     const isAdmin = req.user.role === "admin";
     if (!isOwner && !isAdmin) return res.status(403).json({ error: "FORBIDDEN" });
+
+    // 12-hour cancellation rule: applies to clients (owners), admin can always cancel
+    if (!isAdmin) {
+        const startMs = new Date(row.start_datetime + "Z").getTime();
+        const nowMs = Date.now();
+        const diffHours = (startMs - nowMs) / (1000 * 60 * 60);
+
+        if (diffHours < 12) {
+            return res.status(400).json({ error: "CANCEL_NOT_ALLOWED_WITHIN_12H" });
+        }
+    }
 
     await run(db, "UPDATE bookings SET status = 'canceled' WHERE id = ?", [id]);
     res.json({ canceled: true });
