@@ -15,10 +15,12 @@ async function loadServicesAdmin() {
       </div>
       <button data-id="${s.id}">Disable</button>
     `;
+
         row.querySelector("button").addEventListener("click", async () => {
             await API.del(`/services/${s.id}`);
             await loadServicesAdmin();
         });
+
         list.appendChild(row);
     }
 }
@@ -56,23 +58,43 @@ async function generateSlots() {
 async function loadBookingsAdmin() {
     const list = document.getElementById("bookingsList");
     list.innerHTML = "";
+
     const rows = await API.get("/bookings");
 
     for (const b of rows) {
         const row = document.createElement("div");
         row.className = "item";
+
         row.innerHTML = `
       <div>
         <div><b>${b.client_name}</b> <span class="badge">${b.status}</span></div>
         <div class="small">${b.client_phone || "-"} | ${b.client_email} | ${b.service_name}</div>
         <div class="small">${new Date(b.start_datetime + "Z").toLocaleString()}</div>
       </div>
-      <button data-id="${b.id}">Cancel</button>
+      <div>
+        ${b.status === "booked"
+            ? `<button data-cancel="${b.id}">Cancel</button>`
+            : `<button data-delete="${b.id}">Delete</button>`
+        }
+      </div>
     `;
-        row.querySelector("button").addEventListener("click", async () => {
-            await API.patch(`/bookings/${b.id}/cancel`, {});
-            await loadBookingsAdmin();
-        });
+
+        const cancelBtn = row.querySelector("[data-cancel]");
+        if (cancelBtn) {
+            cancelBtn.addEventListener("click", async () => {
+                await API.patch(`/bookings/${b.id}/cancel`, {});
+                await loadBookingsAdmin();
+            });
+        }
+
+        const deleteBtn = row.querySelector("[data-delete]");
+        if (deleteBtn) {
+            deleteBtn.addEventListener("click", async () => {
+                await API.del(`/bookings/${b.id}`);
+                await loadBookingsAdmin();
+            });
+        }
+
         list.appendChild(row);
     }
 }
@@ -88,6 +110,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("refreshBookings").addEventListener("click", loadBookingsAdmin);
 
     const d = new Date();
-    const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 10);
+
     document.getElementById("slotDate").value = iso;
 });

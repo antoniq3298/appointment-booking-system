@@ -321,6 +321,20 @@ app.patch("/api/bookings/:id/cancel", authRequired, async (req, res) => {
     res.json({ canceled: true });
 });
 
+app.delete("/api/bookings/:id", authRequired, adminOnly, async (req, res) => {
+    const id = Number(req.params.id);
+
+    const row = await get(db, "SELECT id, status FROM bookings WHERE id = ?", [id]);
+    if (!row) return res.status(404).json({ error: "NOT_FOUND" });
+
+    if (row.status !== "canceled") {
+        return res.status(400).json({ error: "ONLY_CANCELED_CAN_BE_DELETED" });
+    }
+
+    await run(db, "DELETE FROM bookings WHERE id = ?", [id]);
+    res.json({ deleted: true });
+});
+
 // start
 (async () => {
     db = await initDb();
