@@ -64,7 +64,7 @@ async function loadBookingsAdmin() {
         row.innerHTML = `
       <div>
         <div><b>${b.client_name}</b> <span class="badge">${b.status}</span></div>
-        <div class="small">${b.client_email} | ${b.service_name}</div>
+        <div class="small">${b.client_phone || "-"} | ${b.client_email} | ${b.service_name}</div>
         <div class="small">${new Date(b.start_datetime + "Z").toLocaleString()}</div>
       </div>
       <button data-id="${b.id}">Cancel</button>

@@ -268,6 +268,7 @@ app.get("/api/bookings", authRequired, adminOnly, async (req, res) => {
         `
     SELECT b.id, b.status, b.created_at,
            u.name AS client_name, u.email AS client_email,
+           u.phone AS client_phone,
            s.name AS service_name,
            sl.start_datetime, sl.end_datetime
     FROM bookings b
