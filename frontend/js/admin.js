@@ -59,11 +59,24 @@ async function loadBookingsAdmin() {
     const list = document.getElementById("bookingsList");
     list.innerHTML = "";
 
-    const rows = await API.get("/bookings");
+    let rows = await API.get("/bookings");
+
+    // sort by date/time ascending (start_datetime)
+    rows = rows.sort((a, b) => {
+        const aMs = new Date(a.start_datetime + "Z").getTime();
+        const bMs = new Date(b.start_datetime + "Z").getTime();
+        return aMs - bMs;
+    });
+
+    const nowMs = Date.now();
 
     for (const b of rows) {
         const row = document.createElement("div");
         row.className = "item";
+
+        const startMs = new Date(b.start_datetime + "Z").getTime();
+        const isPast = startMs <= nowMs;
+        const canDelete = b.status === "canceled" || isPast;
 
         row.innerHTML = `
       <div>
@@ -72,9 +85,10 @@ async function loadBookingsAdmin() {
         <div class="small">${new Date(b.start_datetime + "Z").toLocaleString()}</div>
       </div>
       <div>
-        ${b.status === "booked"
-            ? `<button data-cancel="${b.id}">Cancel</button>`
-            : `<button data-delete="${b.id}">Delete</button>`
+        ${
+            canDelete
+                ? `<button data-delete="${b.id}">Delete</button>`
+                : `<button data-cancel="${b.id}">Cancel</button>`
         }
       </div>
     `;

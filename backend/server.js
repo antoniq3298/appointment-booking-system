@@ -106,7 +106,10 @@ app.post("/api/admin/bootstrap", async (req, res) => {
 
 // SERVICES
 app.get("/api/services", async (req, res) => {
-    const rows = await all(db, "SELECT id, name, duration_minutes, price FROM services WHERE is_active = 1 ORDER BY id DESC");
+    const rows = await all(
+        db,
+        "SELECT id, name, duration_minutes, price FROM services WHERE is_active = 1 ORDER BY id DESC"
+    );
     res.json(rows);
 });
 
@@ -138,22 +141,21 @@ app.get("/api/slots", async (req, res) => {
     const rows = await all(
         db,
         `
-    SELECT s.id, s.start_datetime, s.end_datetime
-    FROM slots s
-    LEFT JOIN bookings b ON b.slot_id = s.id AND b.status = 'booked'
-    WHERE s.is_active = 1
-      AND date(s.start_datetime) = date(?)
-      AND datetime(s.start_datetime) > datetime('now')
-      AND b.id IS NULL
-    ORDER BY s.start_datetime ASC
-    `,
+            SELECT s.id, s.start_datetime, s.end_datetime
+            FROM slots s
+                     LEFT JOIN bookings b ON b.slot_id = s.id AND b.status = 'booked'
+            WHERE s.is_active = 1
+              AND date(s.start_datetime) = date(?)
+              AND datetime(s.start_datetime) > datetime('now')
+              AND b.id IS NULL
+            ORDER BY s.start_datetime ASC
+        `,
         [date]
     );
 
     const nowMs = Date.now();
-    const filtered = rows.filter(s => new Date(s.start_datetime + "Z").getTime() > nowMs);
+    const filtered = rows.filter((s) => new Date(s.start_datetime + "Z").getTime() > nowMs);
     res.json(filtered);
-
 });
 
 app.post("/api/slots", authRequired, adminOnly, async (req, res) => {
@@ -224,6 +226,7 @@ app.post("/api/bookings", authRequired, async (req, res) => {
     // slot must be active
     const slot = await get(db, "SELECT id, start_datetime FROM slots WHERE id = ? AND is_active = 1", [slot_id]);
     if (!slot) return res.status(404).json({ error: "SLOT_NOT_FOUND" });
+
     const startMs = new Date(slot.start_datetime + "Z").getTime();
     if (startMs <= Date.now()) return res.status(400).json({ error: "SLOT_IN_PAST" });
 
@@ -254,15 +257,15 @@ app.get("/api/bookings/my", authRequired, async (req, res) => {
     const rows = await all(
         db,
         `
-    SELECT b.id, b.status, b.created_at,
-           s.name AS service_name,
-           sl.start_datetime, sl.end_datetime
-    FROM bookings b
-    JOIN services s ON s.id = b.service_id
-    JOIN slots sl ON sl.id = b.slot_id
-    WHERE b.user_id = ?
-    ORDER BY sl.start_datetime DESC
-    `,
+            SELECT b.id, b.status, b.created_at,
+                   s.name AS service_name,
+                   sl.start_datetime, sl.end_datetime
+            FROM bookings b
+                     JOIN services s ON s.id = b.service_id
+                     JOIN slots sl ON sl.id = b.slot_id
+            WHERE b.user_id = ?
+            ORDER BY sl.start_datetime ASC
+        `,
         [req.user.id]
     );
     res.json(rows);
@@ -272,17 +275,17 @@ app.get("/api/bookings", authRequired, adminOnly, async (req, res) => {
     const rows = await all(
         db,
         `
-    SELECT b.id, b.status, b.created_at,
-           u.name AS client_name, u.email AS client_email,
-           u.phone AS client_phone,
-           s.name AS service_name,
-           sl.start_datetime, sl.end_datetime
-    FROM bookings b
-    JOIN users u ON u.id = b.user_id
-    JOIN services s ON s.id = b.service_id
-    JOIN slots sl ON sl.id = b.slot_id
-    ORDER BY sl.start_datetime DESC
-    `
+            SELECT b.id, b.status, b.created_at,
+                   u.name AS client_name, u.email AS client_email,
+                   u.phone AS client_phone,
+                   s.name AS service_name,
+                   sl.start_datetime, sl.end_datetime
+            FROM bookings b
+                     JOIN users u ON u.id = b.user_id
+                     JOIN services s ON s.id = b.service_id
+                     JOIN slots sl ON sl.id = b.slot_id
+            ORDER BY sl.start_datetime DESC
+        `
     );
     res.json(rows);
 });
@@ -293,10 +296,10 @@ app.patch("/api/bookings/:id/cancel", authRequired, async (req, res) => {
     const row = await get(
         db,
         `
-        SELECT b.id, b.user_id, sl.start_datetime
-        FROM bookings b
-        JOIN slots sl ON sl.id = b.slot_id
-        WHERE b.id = ?
+            SELECT b.id, b.user_id, sl.start_datetime
+            FROM bookings b
+                     JOIN slots sl ON sl.id = b.slot_id
+            WHERE b.id = ?
         `,
         [id]
     );
@@ -321,14 +324,28 @@ app.patch("/api/bookings/:id/cancel", authRequired, async (req, res) => {
     res.json({ canceled: true });
 });
 
+// DELETE booking: allowed only if canceled OR completed (after end_datetime)
 app.delete("/api/bookings/:id", authRequired, adminOnly, async (req, res) => {
     const id = Number(req.params.id);
 
-    const row = await get(db, "SELECT id, status FROM bookings WHERE id = ?", [id]);
+    const row = await get(
+        db,
+        `
+            SELECT b.id, b.status, sl.end_datetime
+            FROM bookings b
+                     JOIN slots sl ON sl.id = b.slot_id
+            WHERE b.id = ?
+        `,
+        [id]
+    );
     if (!row) return res.status(404).json({ error: "NOT_FOUND" });
 
-    if (row.status !== "canceled") {
-        return res.status(400).json({ error: "ONLY_CANCELED_CAN_BE_DELETED" });
+    const endMs = new Date(row.end_datetime + "Z").getTime();
+    const isCompleted = endMs <= Date.now();
+    const isCanceled = row.status === "canceled";
+
+    if (!isCanceled && !isCompleted) {
+        return res.status(400).json({ error: "ONLY_CANCELED_OR_COMPLETED_CAN_BE_DELETED" });
     }
 
     await run(db, "DELETE FROM bookings WHERE id = ?", [id]);
