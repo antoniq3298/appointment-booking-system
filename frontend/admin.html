@@ -12,6 +12,7 @@
     <nav>
         <a href="/index.html">Home</a>
         <a href="/booking.html">Booking</a>
+        <a href="/profile.html">Profile</a>
     </nav>
     <button id="logout" style="width:auto">Logout</button>
 </header>
@@ -64,6 +65,19 @@
             <h3>Bookings</h3>
             <button id="refreshBookings" style="width:auto">Refresh</button>
             <div id="bookingsList" class="list"></div>
+        </div>
+    </section>
+
+    <section class="col">
+        <div class="card">
+            <h3>Working schedule</h3>
+            <div id="noticeSchedule" class="notice"></div>
+            <div id="scheduleList" class="list"></div>
+
+            <label>Generate slots for next N days</label>
+            <input id="scheduleDays" type="number" value="14" />
+
+            <button id="genFromSchedule">Generate from schedule</button>
         </div>
     </section>
 </main>

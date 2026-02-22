@@ -36,6 +36,39 @@ async function handleLogin() {
     }
 }
 
+async function handleForgotPassword() {
+    const notice = document.getElementById("notice");
+    const email = document.getElementById("email").value.trim();
+
+    try {
+        await API.post("/auth/forgot-password", { email });
+        setNotice(notice, "If that email exists, a reset link was sent.", true);
+    } catch (e) {
+        const code = e?.data?.error || "REQUEST_FAILED";
+        setNotice(notice, code, false);
+    }
+}
+
+async function handleResetPassword() {
+    const notice = document.getElementById("notice");
+    const password = document.getElementById("password").value;
+    const token = new URLSearchParams(window.location.search).get("token");
+
+    if (!token) {
+        setNotice(notice, "MISSING_TOKEN", false);
+        return;
+    }
+
+    try {
+        await API.post("/auth/reset-password", { token, password });
+        setNotice(notice, "Password reset. Redirecting to login...", true);
+        setTimeout(() => (window.location.href = "/login.html"), 1500);
+    } catch (e) {
+        const code = e?.data?.error || "RESET_FAILED";
+        setNotice(notice, code, false);
+    }
+}
+
 async function handleBootstrapAdmin() {
     const notice = document.getElementById("notice");
     const name = document.getElementById("name").value.trim();

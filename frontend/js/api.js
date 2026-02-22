@@ -31,6 +31,9 @@ const API = {
     patch(path, body) {
         return API.request(path, { method: "PATCH", body: JSON.stringify(body || {}) });
     },
+    put(path, body) {
+        return API.request(path, { method: "PUT", body: JSON.stringify(body || {}) });
+    },
     del(path) {
         return API.request(path, { method: "DELETE" });
     }

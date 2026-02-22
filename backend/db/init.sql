@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
                                      email TEXT NOT NULL UNIQUE,
                                      password_hash TEXT NOT NULL,
                                      role TEXT NOT NULL CHECK(role IN ('client','admin')),
+    reset_token_hash TEXT,
+    reset_token_expires TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -33,6 +35,7 @@ CREATE TABLE IF NOT EXISTS bookings (
                                         slot_id INTEGER NOT NULL,
                                         note TEXT,
                                         status TEXT NOT NULL CHECK(status IN ('booked','canceled')),
+    reminder_sent INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY(user_id) REFERENCES users(id),
     FOREIGN KEY(service_id) REFERENCES services(id),
@@ -41,6 +44,15 @@ CREATE TABLE IF NOT EXISTS bookings (
 CREATE UNIQUE INDEX IF NOT EXISTS ux_bookings_slot_booked
     ON bookings(slot_id)
     WHERE status = 'booked';
+
+-- one row per weekday (0=Sunday..6=Saturday) describing the admin-configured working hours
+CREATE TABLE IF NOT EXISTS working_schedule (
+    day_of_week INTEGER PRIMARY KEY CHECK(day_of_week BETWEEN 0 AND 6),
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    interval_minutes INTEGER NOT NULL CHECK(interval_minutes > 0),
+    is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1))
+    );
 
 INSERT INTO services (name, duration_minutes, price, is_active)
 SELECT 'Manicure', 60, 50.00, 1

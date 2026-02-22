@@ -113,15 +113,73 @@ async function loadBookingsAdmin() {
     }
 }
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+async function loadSchedule() {
+    const notice = document.getElementById("noticeSchedule");
+    const list = document.getElementById("scheduleList");
+    list.innerHTML = "";
+
+    const rows = await API.get("/schedule");
+    const byDay = new Map(rows.map((r) => [r.day_of_week, r]));
+
+    for (let day = 0; day < 7; day++) {
+        const entry = byDay.get(day) || { start_time: "09:00", end_time: "17:00", interval_minutes: 30, is_active: 0 };
+
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `
+      <div>
+        <div><b>${DAY_NAMES[day]}</b></div>
+        <label><input type="checkbox" data-role="active" ${entry.is_active ? "checked" : ""}/> Active</label>
+        <input type="time" data-role="start" value="${entry.start_time}" />
+        <input type="time" data-role="end" value="${entry.end_time}" />
+        <input type="number" data-role="interval" value="${entry.interval_minutes}" style="width:70px" />
+      </div>
+      <button data-role="save">Save</button>
+    `;
+
+        row.querySelector('[data-role="save"]').addEventListener("click", async () => {
+            const start_time = row.querySelector('[data-role="start"]').value;
+            const end_time = row.querySelector('[data-role="end"]').value;
+            const interval_minutes = Number(row.querySelector('[data-role="interval"]').value);
+            const is_active = row.querySelector('[data-role="active"]').checked;
+
+            try {
+                await API.put(`/schedule/${day}`, { start_time, end_time, interval_minutes, is_active });
+                setNotice(notice, `${DAY_NAMES[day]} saved.`, true);
+            } catch (e) {
+                setNotice(notice, e?.data?.error || "SCHEDULE_SAVE_FAILED", false);
+            }
+        });
+
+        list.appendChild(row);
+    }
+}
+
+async function generateFromSchedule() {
+    const notice = document.getElementById("noticeSchedule");
+    const days = Number(document.getElementById("scheduleDays").value) || 14;
+
+    try {
+        const r = await API.post("/slots/generate-from-schedule", { days });
+        setNotice(notice, `CREATED_${r.created}_SKIPPED_${r.skipped}`, true);
+    } catch (e) {
+        setNotice(notice, e?.data?.error || "SCHEDULE_GENERATE_FAILED", false);
+    }
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("logout").addEventListener("click", logout);
 
     await loadServicesAdmin();
     await loadBookingsAdmin();
+    await loadSchedule();
 
     document.getElementById("addService").addEventListener("click", addService);
     document.getElementById("genSlots").addEventListener("click", generateSlots);
     document.getElementById("refreshBookings").addEventListener("click", loadBookingsAdmin);
+    document.getElementById("genFromSchedule").addEventListener("click", generateFromSchedule);
 
     const d = new Date();
     const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
