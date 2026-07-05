@@ -1,7 +1,7 @@
-
-<img width="1316" height="832" alt="image" src="https://github.com/user-attachments/assets/d81744cf-a75d-406e-ac4c-a1a88641a512" />
-
 # Appointment Booking System (Slot-Based) — Full-Stack Web App
+<img width="933" height="831" alt="Screenshot 2026-02-22 161439" src="https://github.com/user-attachments/assets/6d030f32-a47e-4ccf-8ce9-e4b9a3a519d4" />
+<img width="1661" height="775" alt="Screenshot 2026-02-22 161502" src="https://github.com/user-attachments/assets/f9aff3ea-22a5-417c-a924-593f16608efd" />
+<img width="1507" height="816" alt="Screenshot 2026-02-22 161528" src="https://github.com/user-attachments/assets/d9a83a8a-a378-40da-bb0d-7291e10cdb49" />
 
 A lightweight web-based appointment booking system for small service businesses.  
 Clients book services into predefined time slots. Admin manages services, slots, and bookings.
