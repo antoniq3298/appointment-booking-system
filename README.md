@@ -10,18 +10,24 @@ Clients book services into predefined time slots. Admin manages services, slots,
 
 ### Client
 - Register / Login
+- Forgot / reset password (emailed link, 1h expiry)
+- Edit profile (name, phone) and change password
 - View active services
-- Select date and view available slots
-- Create booking (conflict-safe)
-- View own bookings
-- Cancel own booking
+- Select a date and see available slots per employee
+- Create booking (conflict-safe, per employee)
+- Email + SMS booking confirmation, cancellation email, 24h-before SMS reminder
+- View own bookings (with assigned employee)
+- Cancel own booking (blocked within 12h of the appointment)
 
 ### Admin
 - One-time admin bootstrap (demo)
 - Add / disable services
-- Generate slots for a date (work range + interval)
-- View all bookings
-- Cancel any booking
+- Add / disable employees
+- Configure a shared weekly working schedule (hours per weekday)
+- Configure closed dates / vacation periods (blocks booking + slot generation)
+- Generate slots for a date + employee (work range + interval), or bulk-generate from the weekly schedule for every active employee
+- View all bookings (with client, employee, service)
+- Cancel or delete any booking
 
 ## Tech Stack
 - Frontend: HTML, CSS, Vanilla JavaScript
@@ -33,6 +39,10 @@ Clients book services into predefined time slots. Admin manages services, slots,
 ├── backend/
 │ ├── package.json
 │ ├── server.js
+│ ├── .env.example
+│ ├── services/
+│ │ ├── mailer.js
+│ │ └── sms.js
 │ └── db/
 │ ├── db.js
 │ └── init.sql
@@ -40,6 +50,9 @@ Clients book services into predefined time slots. Admin manages services, slots,
 │ ├── index.html
 │ ├── login.html
 │ ├── register.html
+│ ├── forgot-password.html
+│ ├── reset-password.html
+│ ├── profile.html
 │ ├── booking.html
 │ ├── admin.html
 │ ├── css/
@@ -47,6 +60,7 @@ Clients book services into predefined time slots. Admin manages services, slots,
 │ └── js/
 │ ├── api.js
 │ ├── auth.js
+│ ├── profile.js
 │ ├── booking.js
 │ └── admin.js
 ├── docs/
@@ -126,17 +140,25 @@ POST /auth/register
 
 POST /auth/login
 
+POST /auth/forgot-password
+
+POST /auth/reset-password
+
 POST /admin/bootstrap (demo)
 
-GET /services
+GET /users/me · PATCH /users/me · POST /users/me/password
 
-POST /services (admin)
+GET /services · POST /services (admin) · DELETE /services/:id (admin)
 
-DELETE /services/:id (admin)
+GET /employees · POST /employees (admin) · DELETE /employees/:id (admin)
+
+GET /schedule (admin) · PUT /schedule/:day (admin)
+
+GET /closed-periods (admin) · POST /closed-periods (admin) · DELETE /closed-periods/:id (admin)
 
 GET /slots?date=YYYY-MM-DD
 
-POST /slots/generate (admin)
+POST /slots (admin) · POST /slots/generate (admin) · POST /slots/generate-from-schedule (admin)
 
 POST /bookings (client)
 
@@ -144,7 +166,7 @@ GET /bookings/my (client)
 
 GET /bookings (admin)
 
-PATCH /bookings/:id/cancel (client/admin)
+PATCH /bookings/:id/cancel (client/admin) · DELETE /bookings/:id (admin)
 
 Full documentation: docs/api.md
 

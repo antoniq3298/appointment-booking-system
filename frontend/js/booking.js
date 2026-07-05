@@ -31,13 +31,13 @@ async function loadSlotsForDate(date) {
         row.innerHTML = `
       <div>
         <div><b>${new Date(s.start_datetime + "Z").toLocaleString()}</b></div>
-        <div class="small">Slot ID: ${s.id}</div>
+        <div class="small">${s.employee_name} | Slot ID: ${s.id}</div>
       </div>
       <button data-id="${s.id}">Select</button>
     `;
         row.querySelector("button").addEventListener("click", () => {
             document.getElementById("slotId").value = s.id;
-            document.getElementById("selectedSlot").textContent = `Selected slot: ${s.id}`;
+            document.getElementById("selectedSlot").textContent = `Selected slot: ${s.id} (${s.employee_name})`;
         });
         list.appendChild(row);
     }
@@ -85,6 +85,7 @@ async function loadMyBookings() {
         row.innerHTML = `
       <div>
         <div><b>${b.service_name}</b> <span class="badge">${b.status}</span></div>
+        <div class="small">${b.employee_name}</div>
         <div class="small">${new Date(b.start_datetime + "Z").toLocaleString()}</div>
       </div>
       <button data-id="${b.id}">Cancel</button>

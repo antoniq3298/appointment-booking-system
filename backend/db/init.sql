@@ -20,18 +20,30 @@ CREATE TABLE IF NOT EXISTS services (
     is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1))
     );
 
+CREATE TABLE IF NOT EXISTS employees (
+                                          id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                          name TEXT NOT NULL,
+                                          is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1))
+    );
+
+-- one slot is one employee's availability at one time, so two employees can each
+-- have their own slot at the same start_datetime (concurrent appointments)
 CREATE TABLE IF NOT EXISTS slots (
                                      id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                     start_datetime TEXT NOT NULL UNIQUE,
+                                     employee_id INTEGER NOT NULL,
+                                     start_datetime TEXT NOT NULL,
                                      end_datetime TEXT NOT NULL,
                                      is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(employee_id) REFERENCES employees(id),
+    UNIQUE(employee_id, start_datetime)
     );
 
 CREATE TABLE IF NOT EXISTS bookings (
                                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                                         user_id INTEGER NOT NULL,
                                         service_id INTEGER NOT NULL,
+                                        employee_id INTEGER NOT NULL,
                                         slot_id INTEGER NOT NULL,
                                         note TEXT,
                                         status TEXT NOT NULL CHECK(status IN ('booked','canceled')),
@@ -39,11 +51,21 @@ CREATE TABLE IF NOT EXISTS bookings (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY(user_id) REFERENCES users(id),
     FOREIGN KEY(service_id) REFERENCES services(id),
+    FOREIGN KEY(employee_id) REFERENCES employees(id),
     FOREIGN KEY(slot_id) REFERENCES slots(id)
     );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_bookings_slot_booked
     ON bookings(slot_id)
     WHERE status = 'booked';
+
+-- admin-configured closed dates / vacation periods - bookings and slot generation both check against this
+CREATE TABLE IF NOT EXISTS closed_periods (
+                                              id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                              start_date TEXT NOT NULL,
+                                              end_date TEXT NOT NULL,
+                                              reason TEXT,
+                                              created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
 
 -- one row per weekday (0=Sunday..6=Saturday) describing the admin-configured working hours
 CREATE TABLE IF NOT EXISTS working_schedule (
@@ -65,3 +87,7 @@ SELECT 'Gel Polish', 90, 70.00, 1
 INSERT INTO services (name, duration_minutes, price, is_active)
 SELECT 'Pedicure', 60, 60.00, 1
     WHERE NOT EXISTS (SELECT 1 FROM services WHERE name='Pedicure');
+
+INSERT INTO employees (name, is_active)
+SELECT 'Staff 1', 1
+    WHERE NOT EXISTS (SELECT 1 FROM employees);

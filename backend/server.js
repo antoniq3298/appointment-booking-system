@@ -285,22 +285,47 @@ app.delete("/api/services/:id", authRequired, adminOnly, async (req, res) => {
     res.json({ deleted: true });
 });
 
+// EMPLOYEES
+app.get("/api/employees", async (req, res) => {
+    const rows = await all(db, "SELECT id, name FROM employees WHERE is_active = 1 ORDER BY name ASC");
+    res.json(rows);
+});
+
+app.post("/api/employees", authRequired, adminOnly, async (req, res) => {
+    const { name } = req.body || {};
+    if (!name) return res.status(400).json({ error: "INVALID_INPUT" });
+
+    const r = await run(db, "INSERT INTO employees (name, is_active) VALUES (?,1)", [name]);
+    const row = await get(db, "SELECT id, name FROM employees WHERE id = ?", [r.lastID]);
+    res.status(201).json(row);
+});
+
+app.delete("/api/employees/:id", authRequired, adminOnly, async (req, res) => {
+    const id = Number(req.params.id);
+    await run(db, "UPDATE employees SET is_active = 0 WHERE id = ?", [id]);
+    res.json({ deleted: true });
+});
+
 // SLOTS
 app.get("/api/slots", async (req, res) => {
     const date = (req.query.date || "").trim(); // YYYY-MM-DD
     if (!date) return res.status(400).json({ error: "DATE_REQUIRED" });
 
+    if (await isDateClosed(date)) return res.json([]);
+
     const rows = await all(
         db,
         `
-            SELECT s.id, s.start_datetime, s.end_datetime
+            SELECT s.id, s.employee_id, e.name AS employee_name, s.start_datetime, s.end_datetime
             FROM slots s
+                     JOIN employees e ON e.id = s.employee_id
                      LEFT JOIN bookings b ON b.slot_id = s.id AND b.status = 'booked'
             WHERE s.is_active = 1
+              AND e.is_active = 1
               AND date(s.start_datetime) = date(?)
               AND datetime(s.start_datetime) > datetime('now')
               AND b.id IS NULL
-            ORDER BY s.start_datetime ASC
+            ORDER BY s.start_datetime ASC, e.name ASC
         `,
         [date]
     );
@@ -311,16 +336,20 @@ app.get("/api/slots", async (req, res) => {
 });
 
 app.post("/api/slots", authRequired, adminOnly, async (req, res) => {
-    const { start_datetime, end_datetime } = req.body || {};
-    if (!start_datetime || !end_datetime) return res.status(400).json({ error: "INVALID_INPUT" });
+    const { employee_id, start_datetime, end_datetime } = req.body || {};
+    if (!employee_id || !start_datetime || !end_datetime) return res.status(400).json({ error: "INVALID_INPUT" });
+
+    if (await isDateClosed(start_datetime.slice(0, 10))) return res.status(400).json({ error: "DATE_CLOSED" });
 
     try {
         const r = await run(
             db,
-            "INSERT INTO slots (start_datetime, end_datetime, is_active) VALUES (?,?,1)",
-            [start_datetime, end_datetime]
+            "INSERT INTO slots (employee_id, start_datetime, end_datetime, is_active) VALUES (?,?,?,1)",
+            [employee_id, start_datetime, end_datetime]
         );
-        const row = await get(db, "SELECT id, start_datetime, end_datetime FROM slots WHERE id = ?", [r.lastID]);
+        const row = await get(db, "SELECT id, employee_id, start_datetime, end_datetime FROM slots WHERE id = ?", [
+            r.lastID
+        ]);
         res.status(201).json(row);
     } catch (e) {
         if (String(e.message || "").includes("UNIQUE")) return res.status(409).json({ error: "SLOT_EXISTS" });
@@ -329,8 +358,10 @@ app.post("/api/slots", authRequired, adminOnly, async (req, res) => {
 });
 
 app.post("/api/slots/generate", authRequired, adminOnly, async (req, res) => {
-    const { date, from, to, intervalMinutes } = req.body || {};
-    if (!date || !from || !to || !intervalMinutes) return res.status(400).json({ error: "INVALID_INPUT" });
+    const { employee_id, date, from, to, intervalMinutes } = req.body || {};
+    if (!employee_id || !date || !from || !to || !intervalMinutes) return res.status(400).json({ error: "INVALID_INPUT" });
+
+    if (await isDateClosed(date)) return res.status(400).json({ error: "DATE_CLOSED" });
 
     const start = new Date(`${date}T${from}:00`);
     const end = new Date(`${date}T${to}:00`);
@@ -351,7 +382,8 @@ app.post("/api/slots/generate", authRequired, adminOnly, async (req, res) => {
         const end_datetime = b.toISOString().slice(0, 19);
 
         try {
-            await run(db, "INSERT INTO slots (start_datetime, end_datetime, is_active) VALUES (?,?,1)", [
+            await run(db, "INSERT INTO slots (employee_id, start_datetime, end_datetime, is_active) VALUES (?,?,?,1)", [
+                employee_id,
                 start_datetime,
                 end_datetime
             ]);
@@ -416,12 +448,15 @@ function toLocalDateStr(d) {
     return `${y}-${m}-${day}`;
 }
 
-// generate slots for the next N days from the configured weekly schedule instead of one date at a time
+// generate slots for the next N days from the configured weekly schedule, one slot per
+// active employee per scheduled time slot - so every employee shares the same hours but
+// can each be booked concurrently. Days that fall inside a closed period are skipped.
 app.post("/api/slots/generate-from-schedule", authRequired, adminOnly, async (req, res) => {
     const days = Number(req.body?.days) || 14;
 
     const schedule = await all(db, "SELECT * FROM working_schedule WHERE is_active = 1");
     const byDay = new Map(schedule.map((s) => [s.day_of_week, s]));
+    const employees = await all(db, "SELECT id FROM employees WHERE is_active = 1");
 
     let created = 0;
     let skipped = 0;
@@ -433,6 +468,8 @@ app.post("/api/slots/generate-from-schedule", authRequired, adminOnly, async (re
         if (!entry) continue;
 
         const dateStr = toLocalDateStr(d);
+        if (await isDateClosed(dateStr)) continue;
+
         const start = new Date(`${dateStr}T${entry.start_time}:00`);
         const end = new Date(`${dateStr}T${entry.end_time}:00`);
         const step = entry.interval_minutes * 60 * 1000;
@@ -440,20 +477,56 @@ app.post("/api/slots/generate-from-schedule", authRequired, adminOnly, async (re
         for (let t = start.getTime(); t + step <= end.getTime(); t += step) {
             const a = new Date(t);
             const b = new Date(t + step);
-            try {
-                await run(db, "INSERT INTO slots (start_datetime, end_datetime, is_active) VALUES (?,?,1)", [
-                    a.toISOString().slice(0, 19),
-                    b.toISOString().slice(0, 19)
-                ]);
-                created++;
-            } catch (e) {
-                skipped++;
+
+            for (const employee of employees) {
+                try {
+                    await run(
+                        db,
+                        "INSERT INTO slots (employee_id, start_datetime, end_datetime, is_active) VALUES (?,?,?,1)",
+                        [employee.id, a.toISOString().slice(0, 19), b.toISOString().slice(0, 19)]
+                    );
+                    created++;
+                } catch (e) {
+                    skipped++;
+                }
             }
         }
     }
 
     res.json({ created, skipped });
 });
+
+// HOLIDAYS / VACATION
+app.get("/api/closed-periods", authRequired, adminOnly, async (req, res) => {
+    const rows = await all(db, "SELECT id, start_date, end_date, reason FROM closed_periods ORDER BY start_date ASC");
+    res.json(rows);
+});
+
+app.post("/api/closed-periods", authRequired, adminOnly, async (req, res) => {
+    const { start_date, end_date, reason } = req.body || {};
+    if (!start_date || !end_date) return res.status(400).json({ error: "INVALID_INPUT" });
+    if (start_date > end_date) return res.status(400).json({ error: "INVALID_RANGE" });
+
+    const r = await run(db, "INSERT INTO closed_periods (start_date, end_date, reason) VALUES (?,?,?)", [
+        start_date,
+        end_date,
+        reason || ""
+    ]);
+    const row = await get(db, "SELECT id, start_date, end_date, reason FROM closed_periods WHERE id = ?", [r.lastID]);
+    res.status(201).json(row);
+});
+
+app.delete("/api/closed-periods/:id", authRequired, adminOnly, async (req, res) => {
+    const id = Number(req.params.id);
+    await run(db, "DELETE FROM closed_periods WHERE id = ?", [id]);
+    res.json({ deleted: true });
+});
+
+// shared by slot listing/generation and booking creation so closures apply everywhere consistently
+async function isDateClosed(dateStr) {
+    const row = await get(db, "SELECT 1 FROM closed_periods WHERE ? BETWEEN start_date AND end_date", [dateStr]);
+    return !!row;
+}
 
 // BOOKINGS
     // CREATE NEW SLOT
@@ -462,11 +535,15 @@ app.post("/api/bookings", authRequired, async (req, res) => {
     if (!service_id || !slot_id) return res.status(400).json({ error: "INVALID_INPUT" });
 
     // slot must be active
-    const slot = await get(db, "SELECT id, start_datetime, end_datetime FROM slots WHERE id = ? AND is_active = 1", [slot_id]);
+    const slot = await get(db, "SELECT id, employee_id, start_datetime, end_datetime FROM slots WHERE id = ? AND is_active = 1", [slot_id]);
     if (!slot) return res.status(404).json({ error: "SLOT_NOT_FOUND" });
 
     const startMs = new Date(slot.start_datetime + "Z").getTime();
     if (startMs <= Date.now()) return res.status(400).json({ error: "SLOT_IN_PAST" });
+
+    // defense in depth: GET /api/slots already hides closed dates, but a slot could have
+    // been created before the closure was configured, or the client's slot list is stale
+    if (await isDateClosed(slot.start_datetime.slice(0, 10))) return res.status(400).json({ error: "DATE_CLOSED" });
 
     // service must be active
     const svc = await get(db, "SELECT id, name FROM services WHERE id = ? AND is_active = 1", [service_id]);
@@ -475,13 +552,13 @@ app.post("/api/bookings", authRequired, async (req, res) => {
     try {
         const r = await run(
             db,
-            "INSERT INTO bookings (user_id, service_id, slot_id, note, status) VALUES (?,?,?,?, 'booked')",
-            [req.user.id, service_id, slot_id, note || ""]
+            "INSERT INTO bookings (user_id, service_id, employee_id, slot_id, note, status) VALUES (?,?,?,?,?, 'booked')",
+            [req.user.id, service_id, slot.employee_id, slot_id, note || ""]
         );
 
         const row = await get(
             db,
-            "SELECT id, user_id, service_id, slot_id, status, created_at FROM bookings WHERE id = ?",
+            "SELECT id, user_id, service_id, employee_id, slot_id, status, created_at FROM bookings WHERE id = ?",
             [r.lastID]
         );
         res.status(201).json(row);
@@ -500,9 +577,11 @@ app.get("/api/bookings/my", authRequired, async (req, res) => {
         `
             SELECT b.id, b.status, b.created_at,
                    s.name AS service_name,
+                   e.name AS employee_name,
                    sl.start_datetime, sl.end_datetime
             FROM bookings b
                      JOIN services s ON s.id = b.service_id
+                     JOIN employees e ON e.id = b.employee_id
                      JOIN slots sl ON sl.id = b.slot_id
             WHERE b.user_id = ?
             ORDER BY sl.start_datetime ASC
@@ -520,10 +599,12 @@ app.get("/api/bookings", authRequired, adminOnly, async (req, res) => {
                    u.name AS client_name, u.email AS client_email,
                    u.phone AS client_phone,
                    s.name AS service_name,
+                   e.name AS employee_name,
                    sl.start_datetime, sl.end_datetime
             FROM bookings b
                      JOIN users u ON u.id = b.user_id
                      JOIN services s ON s.id = b.service_id
+                     JOIN employees e ON e.id = b.employee_id
                      JOIN slots sl ON sl.id = b.slot_id
             ORDER BY sl.start_datetime DESC
         `

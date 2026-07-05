@@ -45,6 +45,53 @@ async function ensureColumn(db, table, column, definition) {
     }
 }
 
+// Databases created before the "employees" feature have a slots table with a plain
+// UNIQUE(start_datetime) constraint and no employee_id column. SQLite can't ALTER a
+// column into/out of an inline UNIQUE constraint, so this rebuilds the table instead.
+// Existing slots/bookings are kept and attached to the first employee row (the seed data
+// in init.sql guarantees one exists; a placeholder "Unassigned" employee is created otherwise).
+// No-op on fresh databases, since init.sql already creates the final shape directly.
+async function migrateEmployeeAwareSlots(db) {
+    const slotCols = await all(db, "PRAGMA table_info(slots)");
+    if (slotCols.some((c) => c.name === "employee_id")) return;
+
+    let defaultEmployee = await get(db, "SELECT id FROM employees ORDER BY id ASC LIMIT 1");
+    if (!defaultEmployee) {
+        const r = await run(db, "INSERT INTO employees (name, is_active) VALUES ('Unassigned', 1)");
+        defaultEmployee = { id: r.lastID };
+    }
+
+    await run(db, "PRAGMA foreign_keys = OFF");
+    await run(
+        db,
+        `CREATE TABLE slots_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employee_id INTEGER NOT NULL REFERENCES employees(id),
+            start_datetime TEXT NOT NULL,
+            end_datetime TEXT NOT NULL,
+            is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE(employee_id, start_datetime)
+        )`
+    );
+    await run(
+        db,
+        `INSERT INTO slots_new (id, employee_id, start_datetime, end_datetime, is_active, created_at)
+         SELECT id, ?, start_datetime, end_datetime, is_active, created_at FROM slots`,
+        [defaultEmployee.id]
+    );
+    await run(db, "DROP TABLE slots");
+    await run(db, "ALTER TABLE slots_new RENAME TO slots");
+    await run(db, "PRAGMA foreign_keys = ON");
+
+    await ensureColumn(db, "bookings", "employee_id", "INTEGER REFERENCES employees(id)");
+    await run(
+        db,
+        `UPDATE bookings SET employee_id = (SELECT employee_id FROM slots WHERE slots.id = bookings.slot_id)
+         WHERE employee_id IS NULL`
+    );
+}
+
 async function initDb() {
     const db = openDb();
     const initSql = fs.readFileSync(INIT_SQL_PATH, "utf-8");
@@ -58,6 +105,7 @@ async function initDb() {
     await ensureColumn(db, "bookings", "reminder_sent", "INTEGER NOT NULL DEFAULT 0");
     await ensureColumn(db, "users", "reset_token_hash", "TEXT");
     await ensureColumn(db, "users", "reset_token_expires", "TEXT");
+    await migrateEmployeeAwareSlots(db);
 
     return db;
 }

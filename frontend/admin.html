@@ -46,6 +46,9 @@
             <h3>Generate slots</h3>
             <div id="noticeSlots" class="notice"></div>
 
+            <label>Employee</label>
+            <select id="slotEmployee"></select>
+
             <label>Date</label>
             <input id="slotDate" type="date" />
 
@@ -74,10 +77,38 @@
             <div id="noticeSchedule" class="notice"></div>
             <div id="scheduleList" class="list"></div>
 
-            <label>Generate slots for next N days</label>
+            <label>Generate slots for next N days (all employees)</label>
             <input id="scheduleDays" type="number" value="14" />
 
             <button id="genFromSchedule">Generate from schedule</button>
+        </div>
+
+        <div class="card">
+            <h3>Employees</h3>
+            <div id="noticeEmployees" class="notice"></div>
+            <div id="employeesList" class="list"></div>
+
+            <label>Name</label>
+            <input id="employeeName" placeholder="Dr. Smith" />
+
+            <button id="addEmployee">Add employee</button>
+        </div>
+
+        <div class="card">
+            <h3>Holidays / vacation</h3>
+            <div id="noticeClosedPeriods" class="notice"></div>
+            <div id="closedPeriodsList" class="list"></div>
+
+            <label>From</label>
+            <input id="closedStart" type="date" />
+
+            <label>To</label>
+            <input id="closedEnd" type="date" />
+
+            <label>Reason</label>
+            <input id="closedReason" placeholder="Optional" />
+
+            <button id="addClosedPeriod">Add closed period</button>
         </div>
     </section>
 </main>

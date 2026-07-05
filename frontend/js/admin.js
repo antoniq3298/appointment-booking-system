@@ -40,18 +40,115 @@ async function addService() {
     }
 }
 
+async function loadEmployeeDropdown() {
+    const sel = document.getElementById("slotEmployee");
+    sel.innerHTML = "";
+    const employees = await API.get("/employees");
+    for (const e of employees) {
+        const opt = document.createElement("option");
+        opt.value = e.id;
+        opt.textContent = e.name;
+        sel.appendChild(opt);
+    }
+}
+
 async function generateSlots() {
     const notice = document.getElementById("noticeSlots");
+    const employee_id = Number(document.getElementById("slotEmployee").value);
     const date = document.getElementById("slotDate").value;
     const from = document.getElementById("slotFrom").value;
     const to = document.getElementById("slotTo").value;
     const intervalMinutes = Number(document.getElementById("slotInterval").value);
 
     try {
-        const r = await API.post("/slots/generate", { date, from, to, intervalMinutes });
+        const r = await API.post("/slots/generate", { employee_id, date, from, to, intervalMinutes });
         setNotice(notice, `CREATED_${r.created}_SKIPPED_${r.skipped}`, true);
     } catch (e) {
         setNotice(notice, e?.data?.error || "SLOTS_GENERATE_FAILED", false);
+    }
+}
+
+async function loadEmployeesAdmin() {
+    const notice = document.getElementById("noticeEmployees");
+    const list = document.getElementById("employeesList");
+    list.innerHTML = "";
+
+    const employees = await API.get("/employees");
+    for (const emp of employees) {
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `
+      <div><b>${emp.name}</b> <span class="small">ID: ${emp.id}</span></div>
+      <button data-id="${emp.id}">Disable</button>
+    `;
+
+        row.querySelector("button").addEventListener("click", async () => {
+            try {
+                await API.del(`/employees/${emp.id}`);
+                await loadEmployeesAdmin();
+                await loadEmployeeDropdown();
+            } catch (e) {
+                setNotice(notice, e?.data?.error || "EMPLOYEE_DISABLE_FAILED", false);
+            }
+        });
+
+        list.appendChild(row);
+    }
+}
+
+async function addEmployee() {
+    const notice = document.getElementById("noticeEmployees");
+    const name = document.getElementById("employeeName").value.trim();
+
+    try {
+        await API.post("/employees", { name });
+        document.getElementById("employeeName").value = "";
+        setNotice(notice, "EMPLOYEE_CREATED", true);
+        await loadEmployeesAdmin();
+        await loadEmployeeDropdown();
+    } catch (e) {
+        setNotice(notice, e?.data?.error || "EMPLOYEE_CREATE_FAILED", false);
+    }
+}
+
+async function loadClosedPeriods() {
+    const list = document.getElementById("closedPeriodsList");
+    list.innerHTML = "";
+
+    const rows = await API.get("/closed-periods");
+    for (const p of rows) {
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `
+      <div>
+        <div><b>${p.start_date} → ${p.end_date}</b></div>
+        <div class="small">${p.reason || "-"}</div>
+      </div>
+      <button data-id="${p.id}">Delete</button>
+    `;
+
+        row.querySelector("button").addEventListener("click", async () => {
+            await API.del(`/closed-periods/${p.id}`);
+            await loadClosedPeriods();
+        });
+
+        list.appendChild(row);
+    }
+}
+
+async function addClosedPeriod() {
+    const notice = document.getElementById("noticeClosedPeriods");
+    const start_date = document.getElementById("closedStart").value;
+    const end_date = document.getElementById("closedEnd").value;
+    const reason = document.getElementById("closedReason").value.trim();
+
+    try {
+        await API.post("/closed-periods", { start_date, end_date, reason });
+        document.getElementById("closedReason").value = "";
+        setNotice(notice, "CLOSED_PERIOD_CREATED", true);
+        await loadClosedPeriods();
+    } catch (e) {
+        setNotice(notice, e?.data?.error || "CLOSED_PERIOD_CREATE_FAILED", false);
     }
 }
 
@@ -81,7 +178,7 @@ async function loadBookingsAdmin() {
         row.innerHTML = `
       <div>
         <div><b>${b.client_name}</b> <span class="badge">${b.status}</span></div>
-        <div class="small">${b.client_phone || "-"} | ${b.client_email} | ${b.service_name}</div>
+        <div class="small">${b.client_phone || "-"} | ${b.client_email} | ${b.service_name} | ${b.employee_name}</div>
         <div class="small">${new Date(b.start_datetime + "Z").toLocaleString()}</div>
       </div>
       <div>
@@ -173,13 +270,18 @@ window.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("logout").addEventListener("click", logout);
 
     await loadServicesAdmin();
+    await loadEmployeeDropdown();
     await loadBookingsAdmin();
     await loadSchedule();
+    await loadEmployeesAdmin();
+    await loadClosedPeriods();
 
     document.getElementById("addService").addEventListener("click", addService);
     document.getElementById("genSlots").addEventListener("click", generateSlots);
     document.getElementById("refreshBookings").addEventListener("click", loadBookingsAdmin);
     document.getElementById("genFromSchedule").addEventListener("click", generateFromSchedule);
+    document.getElementById("addEmployee").addEventListener("click", addEmployee);
+    document.getElementById("addClosedPeriod").addEventListener("click", addClosedPeriod);
 
     const d = new Date();
     const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
