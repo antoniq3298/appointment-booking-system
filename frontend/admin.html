@@ -8,111 +8,116 @@
 </head>
 <body>
 <header>
-    <b>Admin panel</b>
+    <b data-i18n="admin.panelTitle">Admin panel</b>
     <nav>
-        <a href="/index.html">Home</a>
-        <a href="/booking.html">Booking</a>
-        <a href="/profile.html">Profile</a>
+        <a href="/index.html" data-i18n="common.home">Home</a>
+        <a href="/booking.html" data-i18n="common.booking">Booking</a>
+        <a href="/profile.html" data-i18n="common.profile">Profile</a>
     </nav>
-    <button id="logout" style="width:auto">Logout</button>
+    <select id="langSwitch" class="lang-switch">
+        <option value="en">EN</option>
+        <option value="bg">BG</option>
+    </select>
+    <button id="logout" style="width:auto" data-i18n="common.logout">Logout</button>
 </header>
 
 <main class="row">
     <section class="col">
         <div class="card">
-            <h3>Services</h3>
+            <h3 data-i18n="admin.servicesTitle">Services</h3>
             <div id="noticeServices" class="notice"></div>
 
-            <label>Name</label>
-            <input id="svcName" placeholder="New service" />
+            <label data-i18n="common.name">Name</label>
+            <input id="svcName" placeholder="New service" data-i18n-placeholder="admin.serviceNamePlaceholder" />
 
-            <label>Duration (minutes)</label>
+            <label data-i18n="admin.durationLabel">Duration (minutes)</label>
             <input id="svcDuration" type="number" value="60" />
 
-            <label>Price</label>
+            <label data-i18n="admin.priceLabel">Price</label>
             <input id="svcPrice" type="number" value="50" />
 
-            <button id="addService">Add service</button>
+            <button id="addService" data-i18n="admin.addServiceBtn">Add service</button>
         </div>
 
         <div class="card">
-            <h3>Services list</h3>
+            <h3 data-i18n="admin.servicesListTitle">Services list</h3>
             <div id="servicesList" class="list"></div>
         </div>
     </section>
 
     <section class="col">
         <div class="card">
-            <h3>Generate slots</h3>
+            <h3 data-i18n="admin.generateSlotsTitle">Generate slots</h3>
             <div id="noticeSlots" class="notice"></div>
 
-            <label>Employee</label>
+            <label data-i18n="common.employee">Employee</label>
             <select id="slotEmployee"></select>
 
-            <label>Date</label>
+            <label data-i18n="common.date">Date</label>
             <input id="slotDate" type="date" />
 
-            <label>From</label>
+            <label data-i18n="common.from">From</label>
             <input id="slotFrom" type="time" value="10:00" />
 
-            <label>To</label>
+            <label data-i18n="common.to">To</label>
             <input id="slotTo" type="time" value="18:00" />
 
-            <label>Interval (minutes)</label>
+            <label data-i18n="admin.intervalLabel">Interval (minutes)</label>
             <input id="slotInterval" type="number" value="30" />
 
-            <button id="genSlots">Generate</button>
+            <button id="genSlots" data-i18n="admin.generateBtn">Generate</button>
         </div>
 
         <div class="card">
-            <h3>Bookings</h3>
-            <button id="refreshBookings" style="width:auto">Refresh</button>
+            <h3 data-i18n="admin.bookingsTitle">Bookings</h3>
+            <button id="refreshBookings" style="width:auto" data-i18n="admin.refreshBtn">Refresh</button>
             <div id="bookingsList" class="list"></div>
         </div>
     </section>
 
     <section class="col">
         <div class="card">
-            <h3>Working schedule</h3>
+            <h3 data-i18n="admin.workingScheduleTitle">Working schedule</h3>
             <div id="noticeSchedule" class="notice"></div>
             <div id="scheduleList" class="list"></div>
 
-            <label>Generate slots for next N days (all employees)</label>
+            <label data-i18n="admin.generateFromScheduleLabel">Generate slots for next N days (all employees)</label>
             <input id="scheduleDays" type="number" value="14" />
 
-            <button id="genFromSchedule">Generate from schedule</button>
+            <button id="genFromSchedule" data-i18n="admin.generateFromScheduleBtn">Generate from schedule</button>
         </div>
 
         <div class="card">
-            <h3>Employees</h3>
+            <h3 data-i18n="admin.employeesTitle">Employees</h3>
             <div id="noticeEmployees" class="notice"></div>
             <div id="employeesList" class="list"></div>
 
-            <label>Name</label>
-            <input id="employeeName" placeholder="Dr. Smith" />
+            <label data-i18n="common.name">Name</label>
+            <input id="employeeName" placeholder="Dr. Smith" data-i18n-placeholder="admin.employeeNamePlaceholder" />
 
-            <button id="addEmployee">Add employee</button>
+            <button id="addEmployee" data-i18n="admin.addEmployeeBtn">Add employee</button>
         </div>
 
         <div class="card">
-            <h3>Holidays / vacation</h3>
+            <h3 data-i18n="admin.closedPeriodsTitle">Holidays / vacation</h3>
             <div id="noticeClosedPeriods" class="notice"></div>
             <div id="closedPeriodsList" class="list"></div>
 
-            <label>From</label>
+            <label data-i18n="common.from">From</label>
             <input id="closedStart" type="date" />
 
-            <label>To</label>
+            <label data-i18n="common.to">To</label>
             <input id="closedEnd" type="date" />
 
-            <label>Reason</label>
-            <input id="closedReason" placeholder="Optional" />
+            <label data-i18n="common.reason">Reason</label>
+            <input id="closedReason" placeholder="Optional" data-i18n-placeholder="common.optional" />
 
-            <button id="addClosedPeriod">Add closed period</button>
+            <button id="addClosedPeriod" data-i18n="admin.addClosedPeriodBtn">Add closed period</button>
         </div>
     </section>
 </main>
 
+<script src="/js/i18n.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/admin.js"></script>
 </body>

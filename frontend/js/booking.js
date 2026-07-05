@@ -7,9 +7,14 @@ async function loadServices() {
     for (const s of services) {
         const opt = document.createElement("option");
         opt.value = s.id;
-        opt.textContent = `${s.name} (${s.duration_minutes} min) - ${s.price.toFixed(2)}`;
+        opt.textContent = `${s.name} (${s.duration_minutes} ${t("common.min")}) - ${s.price.toFixed(2)}`;
         sel.appendChild(opt);
     }
+}
+
+function setSelectedSlotText(id, employeeName) {
+    const text = id ? `${t("booking.selectedSlotPrefix")}: ${id} (${employeeName})` : `${t("booking.selectedSlotPrefix")}: ${t("booking.selectedSlotNone")}`;
+    document.getElementById("selectedSlot").textContent = text;
 }
 
 async function loadSlotsForDate(date) {
@@ -20,7 +25,7 @@ async function loadSlotsForDate(date) {
     if (!slots.length) {
         const div = document.createElement("div");
         div.className = "notice err";
-        div.textContent = "NO_AVAILABILITY";
+        div.textContent = t("booking.noAvailability");
         list.appendChild(div);
         return;
     }
@@ -30,14 +35,14 @@ async function loadSlotsForDate(date) {
         row.className = "item";
         row.innerHTML = `
       <div>
-        <div><b>${new Date(s.start_datetime + "Z").toLocaleString()}</b></div>
+        <div><b>${I18N.formatDateTime(s.start_datetime)}</b></div>
         <div class="small">${s.employee_name} | Slot ID: ${s.id}</div>
       </div>
-      <button data-id="${s.id}">Select</button>
+      <button data-id="${s.id}">${t("common.select")}</button>
     `;
         row.querySelector("button").addEventListener("click", () => {
             document.getElementById("slotId").value = s.id;
-            document.getElementById("selectedSlot").textContent = `Selected slot: ${s.id} (${s.employee_name})`;
+            setSelectedSlotText(s.id, s.employee_name);
         });
         list.appendChild(row);
     }
@@ -50,22 +55,22 @@ async function createBooking() {
     const note = document.getElementById("note").value.trim();
 
     if (!slot_id) {
-        setNotice(notice, "SLOT_REQUIRED", false);
+        setNotice(notice, t("booking.slotRequired"), false);
         return;
     }
 
     try {
         const r = await API.post("/bookings", { service_id, slot_id, note });
-        setNotice(notice, `BOOKED_ID_${r.id}`, true);
+        setNotice(notice, t("booking.bookedPrefix", { id: r.id }), true);
 
         const date = document.getElementById("date").value;
         await loadSlotsForDate(date);
 
         document.getElementById("slotId").value = "";
-        document.getElementById("selectedSlot").textContent = "Selected slot: -";
+        setSelectedSlotText(null);
     } catch (e) {
         const code = e?.data?.error || "BOOKING_FAILED";
-        setNotice(notice, code, false);
+        setNotice(notice, t(`errors.${code}`), false);
 
         if (e.status === 409) {
             const date = document.getElementById("date").value;
@@ -84,11 +89,11 @@ async function loadMyBookings() {
         row.className = "item";
         row.innerHTML = `
       <div>
-        <div><b>${b.service_name}</b> <span class="badge">${b.status}</span></div>
+        <div><b>${b.service_name}</b> <span class="badge">${t(`status.${b.status}`)}</span></div>
         <div class="small">${b.employee_name}</div>
-        <div class="small">${new Date(b.start_datetime + "Z").toLocaleString()}</div>
+        <div class="small">${I18N.formatDateTime(b.start_datetime)}</div>
       </div>
-      <button data-id="${b.id}">Cancel</button>
+      <button data-id="${b.id}">${t("common.cancel")}</button>
     `;
         row.querySelector("button").addEventListener("click", async () => {
             await API.patch(`/bookings/${b.id}/cancel`, {});
@@ -99,6 +104,9 @@ async function loadMyBookings() {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+    await I18N.ready;
+    setSelectedSlotText(null);
+
     await loadServices();
 
     const dateEl = document.getElementById("date");
@@ -111,7 +119,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     dateEl.addEventListener("change", async () => {
         document.getElementById("slotId").value = "";
-        document.getElementById("selectedSlot").textContent = "Selected slot: -";
+        setSelectedSlotText(null);
         await loadSlotsForDate(dateEl.value);
     });
 

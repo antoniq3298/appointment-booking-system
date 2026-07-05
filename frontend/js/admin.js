@@ -11,9 +11,9 @@ async function loadServicesAdmin() {
         row.innerHTML = `
       <div>
         <div><b>${s.name}</b></div>
-        <div class="small">${s.duration_minutes} min | ${s.price.toFixed(2)} | ID: ${s.id}</div>
+        <div class="small">${s.duration_minutes} ${t("common.min")} | ${s.price.toFixed(2)} | ${t("common.id")}: ${s.id}</div>
       </div>
-      <button data-id="${s.id}">Disable</button>
+      <button data-id="${s.id}">${t("common.disable")}</button>
     `;
 
         row.querySelector("button").addEventListener("click", async () => {
@@ -33,10 +33,10 @@ async function addService() {
 
     try {
         await API.post("/services", { name, duration_minutes, price });
-        setNotice(notice, "SERVICE_CREATED", true);
+        setNotice(notice, t("admin.serviceCreated"), true);
         await loadServicesAdmin();
     } catch (e) {
-        setNotice(notice, e?.data?.error || "SERVICE_CREATE_FAILED", false);
+        setNotice(notice, t(`errors.${e?.data?.error || "SERVICE_CREATE_FAILED"}`), false);
     }
 }
 
@@ -62,9 +62,9 @@ async function generateSlots() {
 
     try {
         const r = await API.post("/slots/generate", { employee_id, date, from, to, intervalMinutes });
-        setNotice(notice, `CREATED_${r.created}_SKIPPED_${r.skipped}`, true);
+        setNotice(notice, t("admin.createdSkipped", { created: r.created, skipped: r.skipped }), true);
     } catch (e) {
-        setNotice(notice, e?.data?.error || "SLOTS_GENERATE_FAILED", false);
+        setNotice(notice, t(`errors.${e?.data?.error || "SLOTS_GENERATE_FAILED"}`), false);
     }
 }
 
@@ -78,8 +78,8 @@ async function loadEmployeesAdmin() {
         const row = document.createElement("div");
         row.className = "item";
         row.innerHTML = `
-      <div><b>${emp.name}</b> <span class="small">ID: ${emp.id}</span></div>
-      <button data-id="${emp.id}">Disable</button>
+      <div><b>${emp.name}</b> <span class="small">${t("common.id")}: ${emp.id}</span></div>
+      <button data-id="${emp.id}">${t("common.disable")}</button>
     `;
 
         row.querySelector("button").addEventListener("click", async () => {
@@ -88,7 +88,7 @@ async function loadEmployeesAdmin() {
                 await loadEmployeesAdmin();
                 await loadEmployeeDropdown();
             } catch (e) {
-                setNotice(notice, e?.data?.error || "EMPLOYEE_DISABLE_FAILED", false);
+                setNotice(notice, t(`errors.${e?.data?.error || "EMPLOYEE_DISABLE_FAILED"}`), false);
             }
         });
 
@@ -103,11 +103,11 @@ async function addEmployee() {
     try {
         await API.post("/employees", { name });
         document.getElementById("employeeName").value = "";
-        setNotice(notice, "EMPLOYEE_CREATED", true);
+        setNotice(notice, t("admin.employeeCreated"), true);
         await loadEmployeesAdmin();
         await loadEmployeeDropdown();
     } catch (e) {
-        setNotice(notice, e?.data?.error || "EMPLOYEE_CREATE_FAILED", false);
+        setNotice(notice, t(`errors.${e?.data?.error || "EMPLOYEE_CREATE_FAILED"}`), false);
     }
 }
 
@@ -124,7 +124,7 @@ async function loadClosedPeriods() {
         <div><b>${p.start_date} → ${p.end_date}</b></div>
         <div class="small">${p.reason || "-"}</div>
       </div>
-      <button data-id="${p.id}">Delete</button>
+      <button data-id="${p.id}">${t("common.delete")}</button>
     `;
 
         row.querySelector("button").addEventListener("click", async () => {
@@ -145,10 +145,10 @@ async function addClosedPeriod() {
     try {
         await API.post("/closed-periods", { start_date, end_date, reason });
         document.getElementById("closedReason").value = "";
-        setNotice(notice, "CLOSED_PERIOD_CREATED", true);
+        setNotice(notice, t("admin.closedPeriodCreated"), true);
         await loadClosedPeriods();
     } catch (e) {
-        setNotice(notice, e?.data?.error || "CLOSED_PERIOD_CREATE_FAILED", false);
+        setNotice(notice, t(`errors.${e?.data?.error || "CLOSED_PERIOD_CREATE_FAILED"}`), false);
     }
 }
 
@@ -177,15 +177,15 @@ async function loadBookingsAdmin() {
 
         row.innerHTML = `
       <div>
-        <div><b>${b.client_name}</b> <span class="badge">${b.status}</span></div>
+        <div><b>${b.client_name}</b> <span class="badge">${t(`status.${b.status}`)}</span></div>
         <div class="small">${b.client_phone || "-"} | ${b.client_email} | ${b.service_name} | ${b.employee_name}</div>
-        <div class="small">${new Date(b.start_datetime + "Z").toLocaleString()}</div>
+        <div class="small">${I18N.formatDateTime(b.start_datetime)}</div>
       </div>
       <div>
         ${
             canDelete
-                ? `<button data-delete="${b.id}">Delete</button>`
-                : `<button data-cancel="${b.id}">Cancel</button>`
+                ? `<button data-delete="${b.id}">${t("common.delete")}</button>`
+                : `<button data-cancel="${b.id}">${t("common.cancel")}</button>`
         }
       </div>
     `;
@@ -210,8 +210,6 @@ async function loadBookingsAdmin() {
     }
 }
 
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
 async function loadSchedule() {
     const notice = document.getElementById("noticeSchedule");
     const list = document.getElementById("scheduleList");
@@ -222,18 +220,19 @@ async function loadSchedule() {
 
     for (let day = 0; day < 7; day++) {
         const entry = byDay.get(day) || { start_time: "09:00", end_time: "17:00", interval_minutes: 30, is_active: 0 };
+        const dayName = t(`days.${day}`);
 
         const row = document.createElement("div");
         row.className = "item";
         row.innerHTML = `
       <div>
-        <div><b>${DAY_NAMES[day]}</b></div>
-        <label><input type="checkbox" data-role="active" ${entry.is_active ? "checked" : ""}/> Active</label>
+        <div><b>${dayName}</b></div>
+        <label><input type="checkbox" data-role="active" ${entry.is_active ? "checked" : ""}/> ${t("common.active")}</label>
         <input type="time" data-role="start" value="${entry.start_time}" />
         <input type="time" data-role="end" value="${entry.end_time}" />
         <input type="number" data-role="interval" value="${entry.interval_minutes}" style="width:70px" />
       </div>
-      <button data-role="save">Save</button>
+      <button data-role="save">${t("common.save")}</button>
     `;
 
         row.querySelector('[data-role="save"]').addEventListener("click", async () => {
@@ -244,9 +243,9 @@ async function loadSchedule() {
 
             try {
                 await API.put(`/schedule/${day}`, { start_time, end_time, interval_minutes, is_active });
-                setNotice(notice, `${DAY_NAMES[day]} saved.`, true);
+                setNotice(notice, t("admin.daySaved", { day: dayName }), true);
             } catch (e) {
-                setNotice(notice, e?.data?.error || "SCHEDULE_SAVE_FAILED", false);
+                setNotice(notice, t(`errors.${e?.data?.error || "SCHEDULE_SAVE_FAILED"}`), false);
             }
         });
 
@@ -260,13 +259,15 @@ async function generateFromSchedule() {
 
     try {
         const r = await API.post("/slots/generate-from-schedule", { days });
-        setNotice(notice, `CREATED_${r.created}_SKIPPED_${r.skipped}`, true);
+        setNotice(notice, t("admin.createdSkipped", { created: r.created, skipped: r.skipped }), true);
     } catch (e) {
-        setNotice(notice, e?.data?.error || "SCHEDULE_GENERATE_FAILED", false);
+        setNotice(notice, t(`errors.${e?.data?.error || "SCHEDULE_GENERATE_FAILED"}`), false);
     }
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+    await I18N.ready;
+
     document.getElementById("logout").addEventListener("click", logout);
 
     await loadServicesAdmin();

@@ -8,25 +8,29 @@
 </head>
 <body>
 <header>
-    <b>Booking</b>
+    <b data-i18n="common.booking">Booking</b>
     <nav>
-        <a href="/index.html">Home</a>
-        <a href="/admin.html">Admin</a>
-        <a href="/profile.html">Profile</a>
+        <a href="/index.html" data-i18n="common.home">Home</a>
+        <a href="/admin.html" data-i18n="common.admin">Admin</a>
+        <a href="/profile.html" data-i18n="common.profile">Profile</a>
     </nav>
-    <button id="logout" style="width:auto">Logout</button>
+    <select id="langSwitch" class="lang-switch">
+        <option value="en">EN</option>
+        <option value="bg">BG</option>
+    </select>
+    <button id="logout" style="width:auto" data-i18n="common.logout">Logout</button>
 </header>
 
 <main class="row">
     <section class="col">
         <div class="card">
-            <h3>Reserve</h3>
+            <h3 data-i18n="booking.reserveTitle">Reserve</h3>
             <div id="notice" class="notice"></div>
 
-            <label>Service</label>
+            <label data-i18n="common.service">Service</label>
             <select id="service"></select>
 
-            <label>Date</label>
+            <label data-i18n="common.date">Date</label>
             <input id="date" type="date" />
 
             <div class="card">
@@ -34,26 +38,27 @@
                 <input id="slotId" type="hidden" />
             </div>
 
-            <label>Note</label>
-            <textarea id="note" rows="3" placeholder="Optional"></textarea>
+            <label data-i18n="booking.note">Note</label>
+            <textarea id="note" rows="3" placeholder="Optional" data-i18n-placeholder="common.optional"></textarea>
 
-            <button id="reserve">Reserve</button>
+            <button id="reserve" data-i18n="booking.reserveBtn">Reserve</button>
         </div>
 
         <div class="card">
-            <h3>Available slots</h3>
+            <h3 data-i18n="booking.availableSlotsTitle">Available slots</h3>
             <div id="slots" class="list"></div>
         </div>
     </section>
 
     <section class="col">
         <div class="card">
-            <h3>My bookings</h3>
+            <h3 data-i18n="booking.myBookingsTitle">My bookings</h3>
             <div id="myBookings" class="list"></div>
         </div>
     </section>
 </main>
 
+<script src="/js/i18n.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/booking.js"></script>
 </body>

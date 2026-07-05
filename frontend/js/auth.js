@@ -1,4 +1,5 @@
 async function handleRegister() {
+    await I18N.ready;
     const notice = document.getElementById("notice");
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
@@ -13,11 +14,12 @@ async function handleRegister() {
         window.location.href = "/booking.html";
     } catch (e) {
         const code = e?.data?.error || "REGISTER_FAILED";
-        setNotice(notice, code, false);
+        setNotice(notice, t(`errors.${code}`), false);
     }
 }
 
 async function handleLogin() {
+    await I18N.ready;
     const notice = document.getElementById("notice");
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
@@ -32,44 +34,47 @@ async function handleLogin() {
         else window.location.href = "/booking.html";
     } catch (e) {
         const code = e?.data?.error || "LOGIN_FAILED";
-        setNotice(notice, code, false);
+        setNotice(notice, t(`errors.${code}`), false);
     }
 }
 
 async function handleForgotPassword() {
+    await I18N.ready;
     const notice = document.getElementById("notice");
     const email = document.getElementById("email").value.trim();
 
     try {
         await API.post("/auth/forgot-password", { email });
-        setNotice(notice, "If that email exists, a reset link was sent.", true);
+        setNotice(notice, t("forgotPassword.sent"), true);
     } catch (e) {
         const code = e?.data?.error || "REQUEST_FAILED";
-        setNotice(notice, code, false);
+        setNotice(notice, t(`errors.${code}`), false);
     }
 }
 
 async function handleResetPassword() {
+    await I18N.ready;
     const notice = document.getElementById("notice");
     const password = document.getElementById("password").value;
     const token = new URLSearchParams(window.location.search).get("token");
 
     if (!token) {
-        setNotice(notice, "MISSING_TOKEN", false);
+        setNotice(notice, t("resetPassword.missingToken"), false);
         return;
     }
 
     try {
         await API.post("/auth/reset-password", { token, password });
-        setNotice(notice, "Password reset. Redirecting to login...", true);
+        setNotice(notice, t("resetPassword.success"), true);
         setTimeout(() => (window.location.href = "/login.html"), 1500);
     } catch (e) {
         const code = e?.data?.error || "RESET_FAILED";
-        setNotice(notice, code, false);
+        setNotice(notice, t(`errors.${code}`), false);
     }
 }
 
 async function handleBootstrapAdmin() {
+    await I18N.ready;
     const notice = document.getElementById("notice");
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -83,6 +88,6 @@ async function handleBootstrapAdmin() {
         window.location.href = "/admin.html";
     } catch (e) {
         const code = e?.data?.error || "BOOTSTRAP_FAILED";
-        setNotice(notice, code, false);
+        setNotice(notice, t(`errors.${code}`), false);
     }
 }

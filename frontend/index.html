@@ -8,50 +8,57 @@
 </head>
 <body>
 <header>
-    <b>Appointment Booking</b>
+    <b data-i18n="common.appName">Appointment Booking</b>
     <nav>
-        <a href="/register.html">Register</a>
-        <a href="/login.html">Login</a>
-        <a href="/booking.html">Booking</a>
-        <a href="/admin.html">Admin</a>
+        <a href="/register.html" data-i18n="common.register">Register</a>
+        <a href="/login.html" data-i18n="common.login">Login</a>
+        <a href="/booking.html" data-i18n="common.booking">Booking</a>
+        <a href="/admin.html" data-i18n="common.admin">Admin</a>
     </nav>
+    <select id="langSwitch" class="lang-switch">
+        <option value="en">EN</option>
+        <option value="bg">BG</option>
+    </select>
 </header>
 
 <main>
     <div class="card start">
-        <h2>Welcome</h2>
+        <h2 data-i18n="index.title">Welcome</h2>
 
-        <p class="hero-sub">
+        <p class="hero-sub" data-i18n="index.subtitle">
             Schedule appointments quickly and securely.
         </p>
 
         <p class="small">
-            <b>Clients:</b> create an account and reserve a time slot.
+            <b data-i18n="index.clientsLabel">Clients:</b>
+            <span data-i18n="index.clientsNote">create an account and reserve a time slot.</span>
         </p>
 
         <p class="small">
-            <b>Admins:</b> manage services and bookings.
+            <b data-i18n="index.adminsLabel">Admins:</b>
+            <span data-i18n="index.adminsNote">manage services and bookings.</span>
         </p>
     </div>
 
     <div class="card start">
-        <h3>Admin Setup (One-Time Only)</h3>
-        <p class="small">Create admin account. Use once.</p>
+        <h3 data-i18n="index.adminSetupTitle">Admin Setup (One-Time Only)</h3>
+        <p class="small" data-i18n="index.adminSetupNote">Create admin account. Use once.</p>
         <div id="notice" class="notice"></div>
 
-        <label>Name</label>
+        <label data-i18n="common.name">Name</label>
         <input id="name" placeholder="Admin" />
 
-        <label>Email</label>
+        <label data-i18n="common.email">Email</label>
         <input id="email" placeholder="admin@mail.bg" />
 
-        <label>Password</label>
+        <label data-i18n="common.password">Password</label>
         <input id="password" type="password" placeholder="****" />
 
-        <button onclick="handleBootstrapAdmin()">Create Admin</button>
+        <button onclick="handleBootstrapAdmin()" data-i18n="index.createAdmin">Create Admin</button>
     </div>
 </main>
 
+<script src="/js/i18n.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
 </body>
